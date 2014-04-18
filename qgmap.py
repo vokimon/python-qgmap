@@ -16,9 +16,32 @@ class QGoogleMap(QtWebKit.QWebView) :
 			QtWebKit.QWebSettings.globalSettings().setAttribute(
 				QtWebKit.QWebSettings.DeveloperExtrasEnabled, True)
 			self.setPage(LoggedPage())
+
+		self.loadFinished.connect(self.onLoadFinished)
+
+		self.initialized = False
+
 		basePath=os.path.abspath(os.path.dirname(__file__))
 		url = 'file://'+basePath+'/qgmap.html'
 		self.load(url)
+
+
+	def onLoadFinished(self, ok) :
+		if self.initialized : return
+		if not ok : return
+		self.initialized = True
+		self.centerAt(41.35,2.05)
+		self.setZoom(13)
+
+	def runScript(self, script) :
+		self.page().mainFrame().evaluateJavaScript(script)
+
+
+	def centerAt(self, latitude, longitude) :
+		self.runScript("setGMapCenter({},{})".format(latitude, longitude))
+
+	def setZoom(self, zoom) :
+		self.runScript("setGMapZoom({})".format(zoom))
 
 
 
