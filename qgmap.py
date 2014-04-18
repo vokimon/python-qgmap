@@ -4,7 +4,16 @@ from PySide import QtCore, QtGui, QtWebKit
 import os
 
 
+class LoggedPage(QtWebKit.QWebPage):
+    def javaScriptConsoleMessage(self, msg, line, source):
+        print ('JS: %s line %d: %s' % (source, line, msg))
+
 class QGoogleMap(QtWebKit.QWebView) :
+	def __init__(self) :
+		super(QGoogleMap, self).__init__()
+		QtWebKit.QWebSettings.globalSettings().setAttribute(QtWebKit.QWebSettings.DeveloperExtrasEnabled, True)
+		self.setPage(LoggedPage())
+
 	pass
 
 
