@@ -1,8 +1,7 @@
-python-qgmap
-============
+python-gmap
+===========
 
-Python based Qt Google Maps widget. PySide but can be PyQt as well (see
-bellow).
+Qt Google Map widget for PySide/PyQt4
 
 Installation
 ------------
@@ -30,6 +29,14 @@ Two main classes are provided:
    convenience accessors to manage center, zoom, markers...
 
 See the main example code at qgmap-example.py
+
+Using it with PyQt4
+-------------------
+
+By default the classes use PySide, but the code works for PyQt4 if you
+set to False the usePySide module variable by hand.
+
+Any suggestion to make this less hacky is welcome.
 
 Acknoledgements
 ---------------
