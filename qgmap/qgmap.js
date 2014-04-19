@@ -25,6 +25,11 @@ function setGMapZoom(zoom)
 
 function addGMapMarker(key, latitude, longitude, parameters)
 {
+
+	if (key in markers) {
+		deleteMarker(key);
+	}
+
 	var coords = new google.maps.LatLng(latitude, longitude);
 	parameters['map'] = map
 	parameters['position'] = coords;
@@ -46,9 +51,8 @@ function moveMarker(key, latitude, longitude)
 
 function deleteMarker(key)
 {
-	marker[key].setMap(null);
-	delete marker[key]
-	
+	markers[key].setMap(null);
+	delete markers[key]
 }
 
 
