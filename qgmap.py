@@ -111,25 +111,32 @@ class QGoogleMap(QtWebKit.QWebView) :
 
 if __name__ == '__main__' :
 
-	def go() :
-		gmap.centerAtAddress(edit.text())
+	def goCoords() :
+		try : latitude, longitude = coordsEdit.text().split(",")
+		except ValueError : pass
+		else : gmap.centerAt(latitude, longitude)
+	def goAddress() :
+		gmap.centerAtAddress(addressEdit.text())
 
 	app = QtGui.QApplication([])
 	w = QtGui.QDialog()
+	l = QtGui.QFormLayout(w)
 	gmap = QGoogleMap(w)
-	gmap.waitUntilReady()
-	edit = QtGui.QLineEdit()
-	edit.editingFinished.connect(go)
-	l = QtGui.QVBoxLayout(w)
-	l.addWidget(edit)
-	l.addWidget(gmap)
+
+	coordsEdit = QtGui.QLineEdit()
+	l.addRow('Coords:', coordsEdit)
+	coordsEdit.editingFinished.connect(goCoords)
+	addressEdit = QtGui.QLineEdit()
+	l.addRow('Address:', addressEdit)
+	addressEdit.editingFinished.connect(goAddress)
+	l.addRow(gmap)
 	w.show()
+	gmap.waitUntilReady()
 	gmap.centerAt(41.35,2.05)
 	gmap.setZoom(13)
 	gmap.centerAtAddress("Verdaguer 40, Sant Joan Despí")
 	gmap.centerAtAddress("Maragall 1, Santa Coloma de Cervelló")
 	gmap.setZoom(17)
-	gmap.runScript("getGMapCenter()")
 
 	app.exec_()
 
