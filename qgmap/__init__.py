@@ -118,11 +118,16 @@ class QGoogleMap(QtWebKit.QWebView) :
 
 	@trace
 	def centerAt(self, latitude, longitude) :
-		self.runScript("setGMapCenter({},{})".format(latitude, longitude))
+		self.runScript("gmap_setCenter({},{})".format(latitude, longitude))
 
 	@trace
 	def setZoom(self, zoom) :
-		self.runScript("setGMapZoom({})".format(zoom))
+		self.runScript("gmap_setZoom({})".format(zoom))
+
+	@trace
+	def center(self) :
+		center = self.runScript("gmap_getCenter()")
+		return center.lat, center.lng
 
 	@trace
 	def centerAtAddress(self, location) :
@@ -142,7 +147,7 @@ class QGoogleMap(QtWebKit.QWebView) :
 	@trace
 	def addMarker(self, key, latitude, longitude, **extra) :
 		return self.runScript(
-			"addGMapMarker("
+			"gmap_addMarker("
 				"key={!r}, "
 				"latitude={}, "
 				"longitude={}, "
@@ -150,12 +155,37 @@ class QGoogleMap(QtWebKit.QWebView) :
 				"); "
 				.format( key, latitude, longitude, json.dumps(extra)))
 
-	markerMoved = QtCore.Signal(str, float, float)
-
+	@trace
 	def moveMarker(self, key, latitude, longitude) :
 		return self.runScript(
-			"moveMarker({!r}, {}, {});".format(key,latitude,longitude))
+			"gmap_moveMarker({!r}, {}, {});".format(key,latitude,longitude))
 
+	@trace
+	def setMarkerOptions(self, keys, **extra) :
+		return self.runScript(
+			"gmap_changeMarker("
+				"key={!r}, "
+				"{}"
+				"); "
+				.format( keys, json.dumps(extra)))
+
+	@trace
+	def deleteMarker(self, key) :
+		return self.runScript(
+			"gmap_deleteMarker("
+				"key={!r}, "
+				"); "
+				.format( key))
+
+	mapMoved = QtCore.Signal(float, float)
+	mapClicked = QtCore.Signal(float, float)
+	mapRightClicked = QtCore.Signal(float, float)
+	mapDoubleClicked = QtCore.Signal(float, float)
+
+	markerMoved = QtCore.Signal(str, float, float)
+	markerClicked = QtCore.Signal(str)
+	markerDoubleClicked = QtCore.Signal(str)
+	markerRightClicked = QtCore.Signal(str)
 
 
 

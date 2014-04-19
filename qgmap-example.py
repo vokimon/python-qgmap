@@ -29,6 +29,23 @@ if __name__ == '__main__' :
 	def onMarkerMoved(key, latitude, longitude) :
 		print("Moved!!", key, latitude, longitude)
 		coordsEdit.setText("{}, {}".format(latitude, longitude))
+	def onMarkerRClick(key) :
+		print("RClick on ", key)
+		gmap.setMarkerOptions(key, draggable=False)
+	def onMarkerLClick(key) :
+		print("LClick on ", key)
+	def onMarkerDClick(key) :
+		print("DClick on ", key)
+		gmap.setMarkerOptions(key, draggable=True)
+
+	def onMapMoved(latitude, longitude) :
+		print("Moved to ", latitude, longitude)
+	def onMapRClick(latitude, longitude) :
+		print("RClick on ", latitude, longitude)
+	def onMapLClick(latitude, longitude) :
+		print("LClick on ", latitude, longitude)
+	def onMapDClick(latitude, longitude) :
+		print("DClick on ", latitude, longitude)
 
 	app = QtGui.QApplication([])
 	w = QtGui.QDialog()
@@ -43,7 +60,14 @@ if __name__ == '__main__' :
 	l.addRow('Coords:', coordsEdit)
 	coordsEdit.editingFinished.connect(goCoords)
 	gmap = QGoogleMap(w)
+	gmap.mapMoved.connect(onMapMoved)
 	gmap.markerMoved.connect(onMarkerMoved)
+	gmap.mapClicked.connect(onMapLClick)
+	gmap.mapDoubleClicked.connect(onMapDClick)
+	gmap.mapRightClicked.connect(onMapRClick)
+	gmap.markerClicked.connect(onMarkerLClick)
+	gmap.markerDoubleClicked.connect(onMarkerDClick)
+	gmap.markerRightClicked.connect(onMarkerRClick)
 	h.addWidget(gmap)
 	gmap.setSizePolicy(
 		QtGui.QSizePolicy.MinimumExpanding,
