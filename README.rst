@@ -13,7 +13,7 @@ Features:
 -  Emits signals on user actions: dragged markers, pans or zooms
 -  Easy to extend, thanks to the painless python-qt-javascript interface
 
-.. figure:: https://raw.githubusercontent.com/vokimon/python-qgmap/screenshots/screenshots/python-qgmap.png
+.. figure:: screenshots/python-qgmap.png
    :alt: Usage Example
 
    Usage Example

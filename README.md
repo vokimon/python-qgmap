@@ -11,7 +11,7 @@ Qt Google Map widget for PySide/PyQt4
 - Emits signals on user actions: dragged markers, pans or zooms
 - Easy to extend, thanks to the painless python-qt-javascript interface
 
-![Usage Example](https://raw.githubusercontent.com/vokimon/python-qgmap/screenshots/screenshots/python-qgmap.png)
+![Usage Example](screenshots/python-qgmap.png)
 
 ## Installation
 
