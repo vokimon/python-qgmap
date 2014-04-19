@@ -23,15 +23,13 @@ function setGMapZoom(zoom)
     map.setZoom(zoom);
 }
 
-function addGMapMarker(key, latitude, longitude, draggable)
+function addGMapMarker(key, latitude, longitude, parameters)
 {
-	var myLatlng = new google.maps.LatLng(latitude, longitude);
-	var marker = new google.maps.Marker({
-		map: map,
-		position: myLatlng,
-		title: key,
-		draggable:draggable,
-	});
+	var coords = new google.maps.LatLng(latitude, longitude);
+	parameters['map'] = map
+	parameters['position'] = coords;
+
+	var marker = new google.maps.Marker(parameters);
 	google.maps.event.addListener(marker, 'dragend', function() {
 		qtWidget.markerMoved(key, marker.position.lat(), marker.position.lng())
 	});

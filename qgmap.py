@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+doTrace = False
 usePySide = True
 if usePySide :
 	from PySide import QtCore, QtGui, QtWebKit, QtNetwork
@@ -9,22 +10,22 @@ else :
 	QtCore.Slot = QtCore.pyqtSlot
 	QtCore.Property = QtCore.pyqtProperty
 
+import json
 import os
 import decorator
 
-doTrace = True
 
 @decorator.decorator
-def trace(function, *args) :
+def trace(function, *args, **k) :
 	"""Decorates a function by tracing the begining and
 	end of the function execution, if doTrace global is True"""
 
-	if doTrace : print ("> "+function.__name__, args)
-	result = function(*args)
-	if doTrace : print ("< "+function.__name__, args, "->", result)
+	if doTrace : print ("> "+function.__name__, args, k)
+	result = function(*args, **k)
+	if doTrace : print ("< "+function.__name__, args, k, "->", result)
 	return result
 
-class LoggedPage(QtWebKit.QWebPage):
+class _LoggedPage(QtWebKit.QWebPage):
 	@trace
 	def javaScriptConsoleMessage(self, msg, line, source):
 		print ('JS: %s line %d: %s' % (source, line, msg))
@@ -83,7 +84,7 @@ class QGoogleMap(QtWebKit.QWebView) :
 		if debug :
 			QtWebKit.QWebSettings.globalSettings().setAttribute(
 				QtWebKit.QWebSettings.DeveloperExtrasEnabled, True)
-			self.setPage(LoggedPage())
+			self.setPage(_LoggedPage())
 
 		self.initialized = False
 		self.loadFinished.connect(self.onLoadFinished)
@@ -132,23 +133,25 @@ class QGoogleMap(QtWebKit.QWebView) :
 		return latitude, longitude
 
 	@trace
-	def markerAtAddress(self, location) :
+	def markerAtAddress(self, location, **extra) :
 		try : latitude, longitude = self.geocode(location)
 		except GeoCoder.NotFoundError : return None
-		return self.addMarker(location, latitude, longitude)
+		return self.addMarker(location, latitude, longitude, **extra)
 		
 
 
 	@trace
-	def addMarker(self,
-			key, latitude, longitude,
-			draggable=False) :
+	def addMarker(self, key, latitude, longitude, **extra) :
 		return self.runScript(
-			"addGMapMarker(key={!r}, latitude={}, longitude={}, draggable={})".format(
-				key, latitude,longitude, str(draggable).lower()))
+			"addGMapMarker("
+				"key={!r}, "
+				"latitude={}, "
+				"longitude={}, "
+				"{}"
+				"); "
+				.format( key, latitude, longitude, json.dumps(extra)))
 
 	markerMoved = QtCore.Signal(str, float, float)
-
 
 if __name__ == '__main__' :
 
@@ -157,7 +160,7 @@ if __name__ == '__main__' :
 		except ValueError : pass
 		else : gmap.centerAt(latitude, longitude)
 	def goAddress() :
-		gmap.centerAtAddress(addressEdit.text())
+		coords = gmap.centerAtAddress(addressEdit.text())
 
 	app = QtGui.QApplication([])
 	w = QtGui.QDialog()
@@ -175,8 +178,17 @@ if __name__ == '__main__' :
 	gmap.waitUntilReady()
 	gmap.centerAt(41.35,2.05)
 	gmap.setZoom(13)
-	coords = gmap.centerAtAddress("Maragall 3, Santa Coloma de Cervelló")
-	gmap.addMarker("MyDragableMark", *coords, **dict(draggable=True))
+	coords = gmap.centerAtAddress("Major 3, Santa Coloma de Cervelló")
+	gmap.addMarker("MyDragableMark", *coords, **dict(
+		icon="http://google.com/mapfiles/ms/micons/blue-dot.png",
+		draggable=True,
+		))
+
+	gmap.markerAtAddress("Major 13, Santa Coloma de Cervelló",
+		icon="http://google.com/mapfiles/ms/micons/green-dot.png",
+		draggable=True,
+		)
+
 	gmap.setZoom(17)
 
 	def onMarkerMoved(key, latitude, longitude) :
