@@ -1,10 +1,18 @@
 #!/usr/bin/python3
 
-from PySide import QtCore, QtGui, QtWebKit, QtNetwork
+usePySide = True
+if usePySide :
+	from PySide import QtCore, QtGui, QtWebKit, QtNetwork
+else :
+	from PyQt4 import QtCore, QtGui, QtWebKit, QtNetwork
+	QtCore.Signal = QtCore.pyqtSignal
+	QtCore.Slot = QtCore.pyqtSlot
+	QtCore.Property = QtCore.pyqtProperty
+
 import os
 import decorator
 
-doTrace = False
+doTrace = True
 
 @decorator.decorator
 def trace(function, *args) :
@@ -20,6 +28,51 @@ class LoggedPage(QtWebKit.QWebPage):
 	@trace
 	def javaScriptConsoleMessage(self, msg, line, source):
 		print ('JS: %s line %d: %s' % (source, line, msg))
+
+class GeoCoder(QtNetwork.QNetworkAccessManager) :
+	class NotFoundError(Exception) : pass
+
+	@trace
+	def __init__(self, parent) :
+		super(GeoCoder, self).__init__(parent)
+
+	@trace
+	def geocode(self, location) :
+		url = QtCore.QUrl("http://maps.googleapis.com/maps/api/geocode/xml")
+		url.addQueryItem("address", location)
+		url.addQueryItem("sensor", "false")
+		"""
+		url = QtCore.QUrl("http://maps.google.com/maps/geo/")
+		url.addQueryItem("q", location)
+		url.addQueryItem("output", "csv")
+		url.addQueryItem("sensor", "false")
+		"""
+		request = QtNetwork.QNetworkRequest(url)
+		reply = self.get(request)
+		while reply.isRunning() :
+			QtGui.QApplication.processEvents()
+
+		reply.deleteLater()
+		self.deleteLater()
+		return self._parseResult(reply)
+
+	@trace
+	def _parseResult(self, reply) :
+		xml = reply.readAll()
+		reader = QtCore.QXmlStreamReader(xml)
+		while not reader.atEnd() :
+			reader.readNext()
+			if reader.name() != "geometry" : continue
+			reader.readNextStartElement()
+			if reader.name() != "location" : continue
+			reader.readNextStartElement()
+			if reader.name() != "lat" : continue
+			latitude = float(reader.readElementText())
+			reader.readNextStartElement()
+			if reader.name() != "lng" : continue
+			longitude = float(reader.readElementText())
+			return latitude, longitude
+		raise NotFoundError
 
 
 class QGoogleMap(QtWebKit.QWebView) :
@@ -39,16 +92,10 @@ class QGoogleMap(QtWebKit.QWebView) :
 
 		basePath=os.path.abspath(os.path.dirname(__file__))
 		url = 'file://'+basePath+'/qgmap.html'
-		self.load(url)
-
-	@trace
-	def waitUntilReady(self) :
-		while not self.initialized :
-			QtGui.QApplication.processEvents()
+		self.load(QtCore.QUrl(url))
 
 	@trace
 	def onLoadFinished(self, ok) :
-		print("onLoadFinished")
 		if self.initialized : return
 		if not ok :
 			print("Error initializing Google Maps")
@@ -57,9 +104,17 @@ class QGoogleMap(QtWebKit.QWebView) :
 		self.setZoom(1)
 
 	@trace
+	def waitUntilReady(self) :
+		while not self.initialized :
+			QtGui.QApplication.processEvents()
+
+	@trace
+	def geocode(self, location) :
+		return GeoCoder(self).geocode(location)
+
+	@trace
 	def runScript(self, script) :
 		return self.page().mainFrame().evaluateJavaScript(script)
-
 
 	@trace
 	def centerAt(self, latitude, longitude) :
@@ -71,52 +126,24 @@ class QGoogleMap(QtWebKit.QWebView) :
 
 	@trace
 	def centerAtAddress(self, location) :
+		try : latitude, longitude = self.geocode(location)
+		except GeoCoder.NotFoundError : return None
+		self.centerAt(latitude, longitude)
+		return latitude, longitude
+
+	@trace
+	def markerAtAddress(self, location) :
+		try : latitude, longitude = self.geocode(location)
+		except GeoCoder.NotFoundError : return None
+		return self.addMarker(location, latitude, longitude)
 		
-		url = QtCore.QUrl("http://maps.googleapis.com/maps/api/geocode/xml")
-		url.addQueryItem("address", location)
-		url.addQueryItem("sensor", "false")
-		"""
-		url = QtCore.QUrl("http://maps.google.com/maps/geo/")
-		url.addQueryItem("q", location)
-		url.addQueryItem("output", "csv")
-		url.addQueryItem("sensor", "false")
-		"""
-		request = QtNetwork.QNetworkRequest(url)
-		reply = self._accessManager().get(request)
-		reply.key = location
 
-	@trace
-	def _accessManager(self) :
-		"""Lazy initializer for the network access manager"""
-		if not hasattr(self, "_connectionManager") :
-			self._connectionManager = QtNetwork.QNetworkAccessManager(self)
-			self._connectionManager.finished.connect(self.geocodeReturned)
-		return self._connectionManager
-
-	@trace
-	def geocodeReturned(self, reply) :
-		xml = reply.readAll()
-		reader = QtCore.QXmlStreamReader(xml)
-		while not reader.atEnd() :
-			reader.readNext()
-			if reader.name() != "geometry" : continue
-			reader.readNextStartElement()
-			if reader.name() != "location" : continue
-			reader.readNextStartElement()
-			if reader.name() != "lat" : continue
-			latitude = float(reader.readElementText())
-			reader.readNextStartElement()
-			if reader.name() != "lng" : continue
-			longitude = float(reader.readElementText())
-			self.centerAt(latitude, longitude)
-			self.addMarker(reply.key, latitude, longitude)
-			return
 
 	@trace
 	def addMarker(self,
 			key, latitude, longitude,
 			draggable=False) :
-		return self.runScript(
+		self.runScript(
 			"addGMapMarker(key={!r}, latitude={}, longitude={}, draggable={})".format(
 				key, latitude,longitude, str(draggable).lower()))
 
@@ -148,8 +175,8 @@ if __name__ == '__main__' :
 	gmap.waitUntilReady()
 	gmap.centerAt(41.35,2.05)
 	gmap.setZoom(13)
-	gmap.centerAtAddress("Verdaguer 40, Sant Joan Despí")
-	gmap.centerAtAddress("Maragall 1, Santa Coloma de Cervelló")
+	coords = gmap.centerAtAddress("Maragall 3, Santa Coloma de Cervelló")
+	gmap.addMarker("Move me!", *coords, **dict(draggable=True))
 	gmap.setZoom(17)
 
 	def onMarkerMoved(key, latitude, longitude) :
@@ -157,7 +184,6 @@ if __name__ == '__main__' :
 
 	gmap.markerMoved.connect(onMarkerMoved)
 
-	gmap.addMarker("Inicial", 41.35,2.05, draggable=True)
 
 	app.exec_()
 
