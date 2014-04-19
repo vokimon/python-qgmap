@@ -143,7 +143,7 @@ class QGoogleMap(QtWebKit.QWebView) :
 	def addMarker(self,
 			key, latitude, longitude,
 			draggable=False) :
-		self.runScript(
+		return self.runScript(
 			"addGMapMarker(key={!r}, latitude={}, longitude={}, draggable={})".format(
 				key, latitude,longitude, str(draggable).lower()))
 
@@ -176,7 +176,7 @@ if __name__ == '__main__' :
 	gmap.centerAt(41.35,2.05)
 	gmap.setZoom(13)
 	coords = gmap.centerAtAddress("Maragall 3, Santa Coloma de Cervelló")
-	gmap.addMarker("Move me!", *coords, **dict(draggable=True))
+	gmap.addMarker("MyDragableMark", *coords, **dict(draggable=True))
 	gmap.setZoom(17)
 
 	def onMarkerMoved(key, latitude, longitude) :

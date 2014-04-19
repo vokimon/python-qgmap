@@ -37,6 +37,7 @@ function addGMapMarker(key, latitude, longitude, draggable)
 	});
 
 	markers[key] = marker;
+	return key;
 }
 
 
