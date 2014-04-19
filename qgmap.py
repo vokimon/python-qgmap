@@ -34,6 +34,8 @@ class QGoogleMap(QtWebKit.QWebView) :
 
 		self.initialized = False
 		self.loadFinished.connect(self.onLoadFinished)
+		self.page().mainFrame().addToJavaScriptWindowObject(
+			"qtWidget", self)
 
 		basePath=os.path.abspath(os.path.dirname(__file__))
 		url = 'file://'+basePath+'/qgmap.html'
@@ -56,7 +58,7 @@ class QGoogleMap(QtWebKit.QWebView) :
 
 	@trace
 	def runScript(self, script) :
-		self.page().mainFrame().evaluateJavaScript(script)
+		return self.page().mainFrame().evaluateJavaScript(script)
 
 
 	@trace
@@ -80,7 +82,8 @@ class QGoogleMap(QtWebKit.QWebView) :
 		url.addQueryItem("sensor", "false")
 		"""
 		request = QtNetwork.QNetworkRequest(url)
-		self._accessManager().get(request)
+		reply = self._accessManager().get(request)
+		reply.key = location
 
 	@trace
 	def _accessManager(self) :
@@ -106,7 +109,18 @@ class QGoogleMap(QtWebKit.QWebView) :
 			if reader.name() != "lng" : continue
 			longitude = float(reader.readElementText())
 			self.centerAt(latitude, longitude)
+			self.addMarker(reply.key, latitude, longitude)
 			return
+
+	@trace
+	def addMarker(self,
+			key, latitude, longitude,
+			draggable=False) :
+		return self.runScript(
+			"addGMapMarker(key={!r}, latitude={}, longitude={}, draggable={})".format(
+				key, latitude,longitude, str(draggable).lower()))
+
+	markerMoved = QtCore.Signal(str, float, float)
 
 
 if __name__ == '__main__' :
@@ -137,6 +151,13 @@ if __name__ == '__main__' :
 	gmap.centerAtAddress("Verdaguer 40, Sant Joan Despí")
 	gmap.centerAtAddress("Maragall 1, Santa Coloma de Cervelló")
 	gmap.setZoom(17)
+
+	def onMarkerMoved(key, latitude, longitude) :
+		print("Moved!!", key, latitude, longitude)
+
+	gmap.markerMoved.connect(onMarkerMoved)
+
+	gmap.addMarker("Inicial", 41.35,2.05, draggable=True)
 
 	app.exec_()
 
