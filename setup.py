@@ -11,7 +11,7 @@ long_description = open('README.txt').read()
 
 setup(
 	name = "qgmap",
-	version = "0.1",
+	version = "0.2",
 	description = "Google Map widget for PySyde/PyQt4",
 	author = "David Garcia Garzon",
 	author_email = "voki@canvoki.net",
