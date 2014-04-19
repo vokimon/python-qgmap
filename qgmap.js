@@ -38,5 +38,19 @@ function addGMapMarker(key, latitude, longitude, parameters)
 	return key;
 }
 
+function moveMarker(key, latitude, longitude)
+{
+	var coords = new google.maps.LatLng(latitude, longitude);
+	markers[key].setPosition(coords);
+}
+
+function deleteMarker(key)
+{
+	marker[key].setMap(null);
+	delete marker[key]
+	
+}
+
+
 
 

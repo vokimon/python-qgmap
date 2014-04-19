@@ -73,7 +73,7 @@ class GeoCoder(QtNetwork.QNetworkAccessManager) :
 			if reader.name() != "lng" : continue
 			longitude = float(reader.readElementText())
 			return latitude, longitude
-		raise NotFoundError
+		raise GeoCoder.NotFoundError
 
 
 class QGoogleMap(QtWebKit.QWebView) :
@@ -133,12 +133,12 @@ class QGoogleMap(QtWebKit.QWebView) :
 		return latitude, longitude
 
 	@trace
-	def markerAtAddress(self, location, **extra) :
+	def addMarkerAtAddress(self, location, **extra) :
+		if 'title' not in extra :
+			extra['title'] = location
 		try : latitude, longitude = self.geocode(location)
 		except GeoCoder.NotFoundError : return None
 		return self.addMarker(location, latitude, longitude, **extra)
-		
-
 
 	@trace
 	def addMarker(self, key, latitude, longitude, **extra) :
@@ -153,48 +153,82 @@ class QGoogleMap(QtWebKit.QWebView) :
 
 	markerMoved = QtCore.Signal(str, float, float)
 
+	def moveMarker(self, key, latitude, longitude) :
+		return self.runScript(
+			"moveMarker({!r}, {}, {});".format(key,latitude,longitude))
+
+
 if __name__ == '__main__' :
 
 	def goCoords() :
+		def resetError() :
+			coordsEdit.setStyleSheet('')
 		try : latitude, longitude = coordsEdit.text().split(",")
-		except ValueError : pass
-		else : gmap.centerAt(latitude, longitude)
+		except ValueError :
+			coordsEdit.setStyleSheet("color: red;")
+			QtCore.QTimer.singleShot(500, resetError)
+		else :
+			gmap.centerAt(latitude, longitude)
+			gmap.moveMarker("MyDragableMark", latitude, longitude)
+
 	def goAddress() :
+		def resetError() :
+			addressEdit.setStyleSheet('')
 		coords = gmap.centerAtAddress(addressEdit.text())
-
-	app = QtGui.QApplication([])
-	w = QtGui.QDialog()
-	l = QtGui.QFormLayout(w)
-	gmap = QGoogleMap(w)
-
-	coordsEdit = QtGui.QLineEdit()
-	l.addRow('Coords:', coordsEdit)
-	coordsEdit.editingFinished.connect(goCoords)
-	addressEdit = QtGui.QLineEdit()
-	l.addRow('Address:', addressEdit)
-	addressEdit.editingFinished.connect(goAddress)
-	l.addRow(gmap)
-	w.show()
-	gmap.waitUntilReady()
-	gmap.centerAt(41.35,2.05)
-	gmap.setZoom(13)
-	coords = gmap.centerAtAddress("Major 3, Santa Coloma de Cervelló")
-	gmap.addMarker("MyDragableMark", *coords, **dict(
-		icon="http://google.com/mapfiles/ms/micons/blue-dot.png",
-		draggable=True,
-		))
-
-	gmap.markerAtAddress("Major 13, Santa Coloma de Cervelló",
-		icon="http://google.com/mapfiles/ms/micons/green-dot.png",
-		draggable=True,
-		)
-
-	gmap.setZoom(17)
+		if coords is None :
+			addressEdit.setStyleSheet("color: red;")
+			QtCore.QTimer.singleShot(500, resetError)
+			return
+		gmap.moveMarker("MyDragableMark", *coords)
+		coordsEdit.setText("{}, {}".format(*coords))
 
 	def onMarkerMoved(key, latitude, longitude) :
 		print("Moved!!", key, latitude, longitude)
+		coordsEdit.setText("{}, {}".format(latitude, longitude))
 
+	app = QtGui.QApplication([])
+	w = QtGui.QDialog()
+	h = QtGui.QVBoxLayout(w)
+	l = QtGui.QFormLayout()
+	h.addLayout(l)
+
+	addressEdit = QtGui.QLineEdit()
+	l.addRow('Address:', addressEdit)
+	addressEdit.editingFinished.connect(goAddress)
+	coordsEdit = QtGui.QLineEdit()
+	l.addRow('Coords:', coordsEdit)
+	coordsEdit.editingFinished.connect(goCoords)
+	gmap = QGoogleMap(w)
 	gmap.markerMoved.connect(onMarkerMoved)
+	h.addWidget(gmap)
+	gmap.setSizePolicy(
+		QtGui.QSizePolicy.MinimumExpanding,
+		QtGui.QSizePolicy.MinimumExpanding)
+	w.show()
+
+	gmap.waitUntilReady()
+
+	gmap.centerAt(41.35,2.05)
+	gmap.setZoom(13)
+	coords = gmap.centerAtAddress("Pau Casals 3, Santa Coloma de Cervelló")
+	# Many icons at: https://sites.google.com/site/gmapsdevelopment/
+	gmap.addMarker("MyDragableMark", *coords, **dict(
+		icon="http://google.com/mapfiles/ms/micons/blue-dot.png",
+		draggable=True,
+		title = "Move me!"
+		))
+
+	# Some Static points
+	for place in [
+		"Pau Casals 13, Santa Coloma de Cervelló",
+		"Ferrer 20, Santa Coloma de Cervelló",
+		]:
+		gmap.addMarkerAtAddress(place,
+			icon="http://google.com/mapfiles/ms/micons/green-dot.png",
+			)
+
+	gmap.setZoom(17)
+
 
 
 	app.exec_()
