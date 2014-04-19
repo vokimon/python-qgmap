@@ -1,5 +1,5 @@
-python-gmap
-===========
+python-qgmap
+============
 
 Qt Google Map widget for PySide/PyQt4
 
@@ -9,22 +9,18 @@ Features:
 -  Specify locations either by latitude, longitude pairs or street
    addresses by means of GeoCoding
 -  Programatically centering, zooming and manipulate markers
--  Flexible marker properties setting
+-  Flexible marker properties (ie. draggable, icon, title...)
 -  Emits signals on user actions: dragged markers, pans or zooms
 -  Easy to extend, thanks to the painless python-qt-javascript interface
 
-.. figure:: screenshots/python-qgmap.png
-   :alt: Usage Example
-
-   Usage Example
 Installation
 ------------
 
-By using pypi:
+By using pip:
 
 ::
 
-    $ pypi-install python-qgmap
+    $ pip3 install qgmap
 
 From source:
 

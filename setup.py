@@ -3,9 +3,11 @@ from distutils.core import setup
 import sys
 import os
 
-if not os.access("README.rst", os.F_OK) :
-	print("Generate README.rst, from README.md using pandoc:\n\t$ pandoc README.md -o README.rst", file=sys.stderr)
+if not os.access("README.txt", os.F_OK) :
+	print("Generate README.txt, using distreadem.sh (requires pandoc)", file=sys.stderr)
 	sys.exit(-1)
+long_description = open('README.txt').read()
+
 
 setup(
 	name = "qgmap",
@@ -14,11 +16,13 @@ setup(
 	author = "David Garcia Garzon",
 	author_email = "voki@canvoki.net",
 	url = 'https://github.com/vokimon/python-qgmap',
-	long_description = open('README.rst').read(),
+	long_description = long_description,
 	license = 'GNU General Public License v3 or later (GPLv3+)',
 	packages=[
 		'qgmap',
 		],
+	package_dir={'qgmap': 'qgmap'},
+    package_data={'qgmap': ['qgmap.js','qgmap.html']},
 	scripts=[
 		'qgmap-example.py',
 		],
