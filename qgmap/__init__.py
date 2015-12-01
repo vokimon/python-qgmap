@@ -173,7 +173,7 @@ class QGoogleMap(QtWebKit.QWebView) :
 	def deleteMarker(self, key) :
 		return self.runScript(
 			"gmap_deleteMarker("
-				"key={!r}, "
+				"key={!r} "
 				"); "
 				.format( key))
 
