@@ -1,29 +1,36 @@
 // main var
 var map;
 var markers=[];
+var qtWidget=undefined;
 
 // main init function
 function initialize() {
-    var myOptions = {
-        zoom: 12,
-        mapTypeId: google.maps.MapTypeId.ROADMAP
-    };
+	new QWebChannel(qt.webChannelTransport, function(channel) {
+		if (typeof channel.objects != 'undefined') {
+			qtWidget = window.qtWidget = channel.objects.qtWidget;
+		}
+		var myOptions = {
+			zoom: 12,
+			mapTypeId: google.maps.MapTypeId.ROADMAP
+		};
+		console.error(google.maps)
 
-	var div = document.getElementById("map_canvas");
-    map = new google.maps.Map(div, myOptions);
-	
-	google.maps.event.addListener(map, 'dragend', function() {
-		center = gmap_getCenter();
-		qtWidget.mapMoved(center.lat(), center.lng());
-	});
-	google.maps.event.addListener(map, 'click', function(ev) {
-		qtWidget.mapClicked(ev.latLng.lat(), ev.latLng.lng());
-	});
-	google.maps.event.addListener(map, 'rightclick', function(ev) {
-		qtWidget.mapRightClicked(ev.latLng.lat(), ev.latLng.lng());
-	});
-	google.maps.event.addListener(map, 'dblclick', function(ev) {
-		qtWidget.mapDoubleClicked(ev.latLng.lat(), ev.latLng.lng());
+		var div = document.getElementById("map_canvas");
+		map = new google.maps.Map(div, myOptions);
+
+		google.maps.event.addListener(map, 'dragend', function() {
+			center = gmap_getCenter();
+			qtWidget.mapMoved(center.lat(), center.lng());
+		});
+		google.maps.event.addListener(map, 'click', function(ev) {
+			qtWidget.mapClicked(ev.latLng.lat(), ev.latLng.lng());
+		});
+		google.maps.event.addListener(map, 'rightclick', function(ev) {
+			qtWidget.mapRightClicked(ev.latLng.lat(), ev.latLng.lng());
+		});
+		google.maps.event.addListener(map, 'dblclick', function(ev) {
+			qtWidget.mapDoubleClicked(ev.latLng.lat(), ev.latLng.lng());
+		});
 	});
 }
 

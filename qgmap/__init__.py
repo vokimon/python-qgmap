@@ -2,9 +2,9 @@
 doTrace = False
 usePySide = True
 if usePySide :
-	from PySide import QtCore, QtGui, QtWebKit, QtNetwork
+	from PySide6 import QtCore, QtGui, QtWidgets, QtWebEngineCore, QtWebEngineWidgets, QtWebChannel, QtNetwork
 else :
-	from PyQt4 import QtCore, QtGui, QtWebKit, QtNetwork
+	from PyQt6 import QtCore, QtGui, QtWidgets, QtWebEngineCore, QtWebEngineWidgets, QtWebChannel, QtNetwork
 	QtCore.Signal = QtCore.pyqtSignal
 	QtCore.Slot = QtCore.pyqtSlot
 	QtCore.Property = QtCore.pyqtProperty
@@ -24,7 +24,7 @@ def trace(function, *args, **k) :
 	if doTrace : print ("< "+function.__name__, args, k, "->", result)
 	return result
 
-class _LoggedPage(QtWebKit.QWebPage):
+class _LoggedPage(QtWebEngineCore.QWebEnginePage):
 	@trace
 	def javaScriptConsoleMessage(self, msg, line, source):
 		print ('JS: %s line %d: %s' % (source, line, msg))
@@ -39,8 +39,10 @@ class GeoCoder(QtNetwork.QNetworkAccessManager) :
 	@trace
 	def geocode(self, location) :
 		url = QtCore.QUrl("http://maps.googleapis.com/maps/api/geocode/xml")
-		url.addQueryItem("address", location)
-		url.addQueryItem("sensor", "false")
+		query = QtCore.QUrlQuery()
+		query.addQueryItem("address", location)
+		query.addQueryItem("sensor", "false")
+		url.setQuery(query)
 		"""
 		url = QtCore.QUrl("http://maps.google.com/maps/geo/")
 		url.addQueryItem("q", location)
@@ -50,7 +52,7 @@ class GeoCoder(QtNetwork.QNetworkAccessManager) :
 		request = QtNetwork.QNetworkRequest(url)
 		reply = self.get(request)
 		while reply.isRunning() :
-			QtGui.QApplication.processEvents()
+			QtWidgets.QApplication.processEvents()
 
 		reply.deleteLater()
 		self.deleteLater()
@@ -75,20 +77,23 @@ class GeoCoder(QtNetwork.QNetworkAccessManager) :
 		raise GeoCoder.NotFoundError
 
 
-class QGoogleMap(QtWebKit.QWebView) :
+class QGoogleMap(QtWebEngineWidgets.QWebEngineView) :
 
 	@trace
 	def __init__(self, parent, debug=True) :
 		super(QGoogleMap, self).__init__(parent)
 		if debug :
-			QtWebKit.QWebSettings.globalSettings().setAttribute(
-				QtWebKit.QWebSettings.DeveloperExtrasEnabled, True)
+			"""
+			QtWebEngineCore.QWebEngineSettings.globalSettings().setAttribute(
+				QtWebEngineCore.QWebEngineSettings.DeveloperExtrasEnabled, True)
+			"""
 			self.setPage(_LoggedPage())
 
 		self.initialized = False
 		self.loadFinished.connect(self.onLoadFinished)
-		self.page().mainFrame().addToJavaScriptWindowObject(
-			"qtWidget", self)
+		self.channel = QtWebChannel.QWebChannel(self)
+		self.page().setWebChannel(self.channel)
+		self.channel.registerObject('qtWidget', self)
 
 		basePath=os.path.abspath(os.path.dirname(__file__))
 		url = 'file://'+basePath+'/qgmap.html'
@@ -106,7 +111,7 @@ class QGoogleMap(QtWebKit.QWebView) :
 	@trace
 	def waitUntilReady(self) :
 		while not self.initialized :
-			QtGui.QApplication.processEvents()
+			QtWidgets.QApplication.processEvents()
 
 	@trace
 	def geocode(self, location) :
@@ -114,7 +119,7 @@ class QGoogleMap(QtWebKit.QWebView) :
 
 	@trace
 	def runScript(self, script) :
-		return self.page().mainFrame().evaluateJavaScript(script)
+		return self.page().runJavaScript(script)
 
 	@trace
 	def centerAt(self, latitude, longitude) :

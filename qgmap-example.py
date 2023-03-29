@@ -47,31 +47,33 @@ if __name__ == '__main__' :
 	def onMapDClick(latitude, longitude) :
 		print("DClick on ", latitude, longitude)
 
-	app = QtGui.QApplication([])
-	w = QtGui.QDialog()
-	h = QtGui.QVBoxLayout(w)
-	l = QtGui.QFormLayout()
+	print("Creatting app")
+
+	app = QtWidgets.QApplication([])
+	w = QtWidgets.QDialog()
+	h = QtWidgets.QVBoxLayout(w)
+	l = QtWidgets.QFormLayout()
 	h.addLayout(l)
 
-	addressEdit = QtGui.QLineEdit()
+	addressEdit = QtWidgets.QLineEdit()
 	l.addRow('Address:', addressEdit)
 	addressEdit.editingFinished.connect(goAddress)
-	coordsEdit = QtGui.QLineEdit()
+	coordsEdit = QtWidgets.QLineEdit()
 	l.addRow('Coords:', coordsEdit)
 	coordsEdit.editingFinished.connect(goCoords)
 	gmap = QGoogleMap(w)
 	gmap.mapMoved.connect(onMapMoved)
-	gmap.markerMoved.connect(onMarkerMoved)
 	gmap.mapClicked.connect(onMapLClick)
 	gmap.mapDoubleClicked.connect(onMapDClick)
 	gmap.mapRightClicked.connect(onMapRClick)
+	gmap.markerMoved.connect(onMarkerMoved)
 	gmap.markerClicked.connect(onMarkerLClick)
 	gmap.markerDoubleClicked.connect(onMarkerDClick)
 	gmap.markerRightClicked.connect(onMarkerRClick)
 	h.addWidget(gmap)
 	gmap.setSizePolicy(
-		QtGui.QSizePolicy.MinimumExpanding,
-		QtGui.QSizePolicy.MinimumExpanding)
+		QtWidgets.QSizePolicy.MinimumExpanding,
+		QtWidgets.QSizePolicy.MinimumExpanding)
 	w.show()
 
 	gmap.waitUntilReady()
@@ -80,11 +82,12 @@ if __name__ == '__main__' :
 	gmap.setZoom(13)
 	coords = gmap.centerAtAddress("Pau Casals 3, Santa Coloma de Cervelló")
 	# Many icons at: https://sites.google.com/site/gmapsdevelopment/
-	gmap.addMarker("MyDragableMark", *coords, **dict(
-		icon="http://google.com/mapfiles/ms/micons/blue-dot.png",
-		draggable=True,
-		title = "Move me!"
-		))
+	if coords:
+		gmap.addMarker("MyDragableMark", *coords, **dict(
+			icon="http://google.com/mapfiles/ms/micons/blue-dot.png",
+			draggable=True,
+			title = "Move me!"
+			))
 
 	# Some Static points
 	for place in [
@@ -99,7 +102,7 @@ if __name__ == '__main__' :
 
 
 
-	app.exec_()
+	app.exec()
 
 
 
