@@ -1,0 +1,66 @@
+# This is a basic workflow to help you get started with Actions
+
+name: CI
+
+# Controls when the action will run. 
+on:
+  # Triggers the workflow on push
+  push:
+  # Triggers the workflow on pull request events
+  pull_request:
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      TRAVIS: 'true' # Skip tests requiring data
+    strategy:
+      matrix:
+        python-version:
+          - '3.10'
+          - '3.11'
+          - '3.12'
+    name: Python ${{ matrix.python-version }}
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.head_ref }}
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - uses: BSFishy/pip-action@v1
+        with:
+          packages: |
+            coveralls
+            pytest-cov
+
+      - name: Install dependencies
+        run: |
+          pip install -e .
+
+      - name: Unit tests
+        run: |
+          pytest --cov=somutils somutils
+
+      - name: Coveralls
+        uses: AndreMiras/coveralls-python-action@develop
+        with:
+          parallel: true
+          flag-name: Unit tests
+
+  coveralls_finish:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Coveralls Finished
+      uses: AndreMiras/coveralls-python-action@develop
+      with:
+        parallel-finished: true
