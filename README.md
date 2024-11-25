@@ -1,7 +1,7 @@
 python-qgmap
 ============
 
-Qt Google Map widget for PySide/PyQt4
+Qt Google Map widget for PySide/PyQt6
 
 ## Features:
 
@@ -34,9 +34,9 @@ Two main classes are provided:
 
 See the main example code at qgmap-example.py
 
-## Using it with PyQt4
+## Using it with PyQt6
 
-By default the classes use PySide, but the code works for PyQt4 if you
+By default the classes use PySide, but the code works for PyQt6 if you
 set to False the usePySide module variable by hand.
 
 Any suggestion to make this less hacky is welcome.
