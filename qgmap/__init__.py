@@ -195,6 +195,12 @@ class QGoogleMap(QtWebEngineWidgets.QWebEngineView) :
 			f"gmap_deleteMarker({key!r})"
 		)
 
+	@trace
+	def setTileSet(self, tilesetOptions) :
+		return self.runScript(
+			f"gmap_setTileSet({tilesetOptions})"
+		)
+
 	mapMoved = QtCore.Signal(float, float)
 	mapClicked = QtCore.Signal(float, float)
 	mapRightClicked = QtCore.Signal(float, float)

@@ -47,6 +47,11 @@ if __name__ == '__main__' :
 		print("LClick on ", latitude, longitude)
 	def onMapDClick(latitude, longitude) :
 		print("DClick on ", latitude, longitude)
+	def onSetTileSet(tilesetName):
+		gmap.setTileSet(
+			tilesets.get(tilesetName) or 
+			tilesets['osm']
+		)
 
 	print("Creatting app")
 
@@ -62,6 +67,13 @@ if __name__ == '__main__' :
 	coordsEdit = QtWidgets.QLineEdit()
 	l.addRow('Coords:', coordsEdit)
 	coordsEdit.editingFinished.connect(goCoords)
+	tilesetSelector = QtWidgets.QComboBox(w)
+	tilesetSelector.addItems([
+		key for key in tilesets
+	])
+	l.addRow("Tile set", tilesetSelector)
+	tilesetSelector.currentTextChanged.connect(onSetTileSet)
+
 	gmap = QGoogleMap(w)
 	gmap.mapMoved.connect(onMapMoved)
 	gmap.mapClicked.connect(onMapLClick)
