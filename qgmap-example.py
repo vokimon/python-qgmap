@@ -82,24 +82,22 @@ if __name__ == '__main__' :
 	gmap.centerAt(41.35,2.05)
 	gmap.setZoom(13)
 	coords = gmap.centerAtAddress("Pau Casals 3, Santa Coloma de Cervelló")
-	# Many icons at: https://sites.google.com/site/gmapsdevelopment/
 	if coords:
-		gmap.addMarker("MyDragableMark", *coords, **dict(
-			icon="http://google.com/mapfiles/ms/micons/blue-dot.png",
-			draggable=True,
+		gmap.addMarker("MyDragableMark", *coords, 
+			icon=customPin('green'),
+			draggable=1,
 			title = "Move me!"
-			))
+		)
 
 	# Some Static points
 	for place in [
 		"Pau Casals 13, Santa Coloma de Cervelló",
 		"Ferrer 20, Santa Coloma de Cervelló",
+		"San Joan Despi",
 		]:
 		gmap.addMarkerAtAddress(place,
-			icon="http://google.com/mapfiles/ms/micons/green-dot.png",
-			)
-
-	gmap.setZoom(17)
+			icon=customPin('darkred'),
+		)
 
 
 
