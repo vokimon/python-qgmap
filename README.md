@@ -20,9 +20,6 @@ By using pip:
 
 	$ pip3 install qgmap
 
-From source:
-
-	python3 setup.py --install
 
 ## Usage
 

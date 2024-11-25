@@ -27,13 +27,15 @@ classifiers = [
 ]
 dependencies = [
     'pyside6',
+    'pytest',
+    'pytest-cov',
 ]
 
 [project.scripts]
 qgmap-example = "qgmap.example:main"
 
 [project.urls]
-Homepage = "https://somenergia.coop"
+Homepage = "https://github.com/vokimon/python-qgmap"
 Documentation = "https://github.com/vokimon/python-qgmap"
 Repository = "https://github.com/vokimon/python-qgmap"
 Changelog = "https://github.com/vokimon/python-qgmap/blob/master/CHANGELOG.md"
