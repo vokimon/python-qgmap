@@ -135,6 +135,7 @@ class QGoogleMap(QtWebEngineWidgets.QWebEngineView) :
 
 	@trace
 	def runScript(self, script) :
+		#print(script)
 		return self.page().runJavaScript(script)
 
 	@trace

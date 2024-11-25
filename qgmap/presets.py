@@ -1,4 +1,4 @@
-
+# https://leaflet-extras.github.io/leaflet-providers/preview/
 tilesets = dict(
 	osm = dict(
 		urlTemplate = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
@@ -33,7 +33,6 @@ def customPin(color):
 		'data:image/svg+xml;utf8,'
 		'<svg xmlns="http://www.w3.org/2000/svg" width="24" height="42" viewBox="-12 -42 24 42">' 
 		f'<path d="{path}" fill="{color}" stroke="black"/>'
-		#'<rect x="-10" y="-40" width="20" height="40" fill="red" stroke="purple" opacity="50%"/>'
 		'</svg>'
 	)
 	return dict(
