@@ -1,0 +1,52 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+
+[project]
+name = "qgmap"
+version="0.2"
+description = "Interactive map widget for PySyde/PyQt4"
+authors = [
+    { name="David García Garzón", email="voki@canvoki.net" },
+]
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file="LICENSE"}
+keywords = ["maps", "qt", "pyside", "pyqt"]
+
+classifiers = [
+    'Programming Language :: Python',
+    'Programming Language :: Python :: 3',
+    'Topic :: Scientific/Engineering :: GIS',
+    'Topic :: Software Development :: Libraries :: Python Modules',
+    'Environment :: X11 Applications :: Qt',
+    'Environment :: Win32 (MS Windows)',
+    'Intended Audience :: Developers',
+    'Development Status :: 5 - Production/Stable',
+    'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
+    'Operating System :: OS Independent',
+]
+dependencies = [
+    'pyside6',
+]
+
+[project.scripts]
+qgmap-example = "qgmap.example:main"
+
+[project.urls]
+Homepage = "https://somenergia.coop"
+Documentation = "https://github.com/vokimon/python-qgmap"
+Repository = "https://github.com/vokimon/python-qgmap"
+Changelog = "https://github.com/vokimon/python-qgmap/blob/master/CHANGELOG.md"
+
+[tool.setuptools.packages]
+find = {}
+
+[tool.coverage.run]
+relative_files = true
+branch = true
+omit = ["**/*test.py"]
+
+[tool.pytest.ini_options]
+addopts = "--doctest-modules --cov=qgmap"
+
+

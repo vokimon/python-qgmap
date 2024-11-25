@@ -3,8 +3,7 @@
 from qgmap import QGoogleMap, QtCore, QtWidgets
 from qgmap.presets import tilesets, googlePin, customPin
 
-if __name__ == '__main__' :
-
+def main():
 	def goCoords() :
 		def resetError() :
 			coordsEdit.setStyleSheet('')
@@ -115,5 +114,8 @@ if __name__ == '__main__' :
 
 	app.exec()
 
+
+if __name__ == '__main__' :
+	main()
 
 
