@@ -31,12 +31,12 @@ if __name__ == '__main__' :
 		coordsEdit.setText("{}, {}".format(latitude, longitude))
 	def onMarkerRClick(key) :
 		print("RClick on ", key)
-		gmap.setMarkerOptions(key, draggable=False)
+		gmap.setMarkerOptions(key, draggable=0)
 	def onMarkerLClick(key) :
 		print("LClick on ", key)
 	def onMarkerDClick(key) :
 		print("DClick on ", key)
-		gmap.setMarkerOptions(key, draggable=True)
+		gmap.setMarkerOptions(key, draggable=1)
 
 	def onMapMoved(latitude, longitude) :
 		print("Moved to ", latitude, longitude)
