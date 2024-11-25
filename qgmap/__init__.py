@@ -38,17 +38,15 @@ class GeoCoder(QtNetwork.QNetworkAccessManager) :
 
 	@trace
 	def geocode(self, location) :
-		url = QtCore.QUrl("http://maps.googleapis.com/maps/api/geocode/xml")
+		#url = QtCore.QUrl("http://maps.googleapis.com/maps/api/geocode/xml")
+		url = QtCore.QUrl(
+			"https://nominatim.openstreetmap.org/search")
 		query = QtCore.QUrlQuery()
-		query.addQueryItem("address", location)
-		query.addQueryItem("sensor", "false")
+		query.addQueryItem("q", location)
+		query.addQueryItem("format", "json")
+		query.addQueryItem("polygon", "1")
+		query.addQueryItem("addressdetails", "1")
 		url.setQuery(query)
-		"""
-		url = QtCore.QUrl("http://maps.google.com/maps/geo/")
-		url.addQueryItem("q", location)
-		url.addQueryItem("output", "csv")
-		url.addQueryItem("sensor", "false")
-		"""
 		request = QtNetwork.QNetworkRequest(url)
 		reply = self.get(request)
 		while reply.isRunning() :
@@ -60,22 +58,10 @@ class GeoCoder(QtNetwork.QNetworkAccessManager) :
 
 	@trace
 	def _parseResult(self, reply) :
-		xml = reply.readAll()
-		reader = QtCore.QXmlStreamReader(xml)
-		while not reader.atEnd() :
-			reader.readNext()
-			if reader.name() != "geometry" : continue
-			reader.readNextStartElement()
-			if reader.name() != "location" : continue
-			reader.readNextStartElement()
-			if reader.name() != "lat" : continue
-			latitude = float(reader.readElementText())
-			reader.readNextStartElement()
-			if reader.name() != "lng" : continue
-			longitude = float(reader.readElementText())
-			return latitude, longitude
-		raise GeoCoder.NotFoundError
-
+		jsondata = reply.readAll()
+		data = json.loads(bytes(jsondata))
+		if not data: raise GeoCoder.NotFoundError
+		return data[0]['lat'], data[0]['lon']
 
 class QGoogleMap(QtWebEngineWidgets.QWebEngineView) :
 
