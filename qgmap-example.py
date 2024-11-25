@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-from qgmap import *
+from qgmap import QGoogleMap, QtCore, QtWidgets
+from qgmap.presets import tilesets, googlePin, customPin
 
 if __name__ == '__main__' :
 
