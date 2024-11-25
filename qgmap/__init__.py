@@ -100,13 +100,6 @@ class QGoogleMap(QtWebEngineWidgets.QWebEngineView) :
 		self.initialized = False
 		self.resize(1024, 750);
 		self.loadFinished.connect(self.onLoadFinished)
-		self.page().loadingChanged.connect(
-			lambda info:
-				print(
-					f"Loading {info.url().toString()}...\n"
-					f"\t{info.errorString()}"
-				)
-		)
 		self.channel = QtWebChannel.QWebChannel(self)
 		self.page().setWebChannel(self.channel)
 		self.channel.registerObject('qtWidget', self)
