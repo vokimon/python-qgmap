@@ -59,6 +59,9 @@ jobs:
           flag-name: Unit tests
 
   notify:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
     - name: 📢 Notify changes
       uses: cbrgm/telegram-github-action@v1
       if: always()
