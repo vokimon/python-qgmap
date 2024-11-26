@@ -1,71 +1,107 @@
 // main var
 var map;
 var markers=[];
+var tileset=undefined;
+var qtWidget=undefined;
+
+const defaultLocation = [41.368056,2.058056]
+const defaultZoom = 16 
+const defaultTileSet = {
+	urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+	attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+}
+
+
+function showMethods(object) {
+	//console.error(JSON.stringify(object.toJSON()))
+	for (method in object) {
+		console.error("method", method)
+	}
+}
+
+function event_latlng(ev) {
+	return [ ev.latlng.lat, ev.latlng.lng ]
+}
+
+function processMarkerExtras(extras) {
+	if (extras && extras['icon']) {
+		extras.icon = L.icon(extras.icon)
+	}
+}
+
+
 
 // main init function
 function initialize() {
-    var myOptions = {
-        zoom: 12,
-        mapTypeId: google.maps.MapTypeId.ROADMAP
-    };
+	new QWebChannel(qt.webChannelTransport, function(channel) {
+		map = L.map('map').setView(defaultLocation, defaultZoom);
 
-	var div = document.getElementById("map_canvas");
-    map = new google.maps.Map(div, myOptions);
-	
-	google.maps.event.addListener(map, 'dragend', function() {
-		center = gmap_getCenter();
-		qtWidget.mapMoved(center.lat(), center.lng());
-	});
-	google.maps.event.addListener(map, 'click', function(ev) {
-		qtWidget.mapClicked(ev.latLng.lat(), ev.latLng.lng());
-	});
-	google.maps.event.addListener(map, 'rightclick', function(ev) {
-		qtWidget.mapRightClicked(ev.latLng.lat(), ev.latLng.lng());
-	});
-	google.maps.event.addListener(map, 'dblclick', function(ev) {
-		qtWidget.mapDoubleClicked(ev.latLng.lat(), ev.latLng.lng());
+		gmap_setTileSet(defaultTileSet)
+
+		qtWidget = window.qtWidget = channel.objects.qtWidget;
+
+		map.on('moveend', function() {
+			const [lat, lng] = gmap_getCenter();
+			qtWidget.emitMapMoved(lat, lng, (result) => undefined);
+		});
+		map.on('click', function(ev) {
+			qtWidget.emitMapClicked(...event_latlng(ev));
+		});
+		map.on('contextmenu', function(ev) {
+			qtWidget.emitMapRightClicked(...event_latlng(ev));
+		});
+		map.on('dblclick', function(ev) {
+			qtWidget.emitMapDoubleClicked(...event_latlng(ev));
+		});
 	});
 }
 
 // custom functions
+function gmap_setTileSet(params)
+{
+	const {urlTemplate, ...options} = params
+	if (tileset) tileset.remove()
+	tileset = L.tileLayer(urlTemplate, options)
+	tileset.addTo(map)
+}
+
 function gmap_setCenter(lat, lng)
 {
-    map.setCenter(new google.maps.LatLng(lat, lng));
+	map.panTo([lat, lng]);
 }
 
 function gmap_getCenter()
 {
-	return map.getCenter();
+	const latlng = map.getCenter()
+	return [latlng.lat, latlng.lng]
 }
 
 function gmap_setZoom(zoom)
 {
-    map.setZoom(zoom);
+	map.setZoom(zoom);
 }
 
 function gmap_addMarker(key, latitude, longitude, parameters)
 {
-
-	if (key in markers) {
+	if (markers[key]) {
 		gmap_deleteMarker(key);
 	}
+	processMarkerExtras(parameters)
 
-	var coords = new google.maps.LatLng(latitude, longitude);
-	parameters['map'] = map
-	parameters['position'] = coords;
+	var marker = L.marker([latitude, longitude], parameters).addTo(map)
 
-	var marker = new google.maps.Marker(parameters);
-	google.maps.event.addListener(marker, 'dragend', function() {
-		qtWidget.markerMoved(key, marker.position.lat(), marker.position.lng())
+	marker.on('moveend', function() {
+		const [lat, lng] = gmap_getCenter();
+		qtWidget.emitMarkerMoved(key, lat, lng);
 	});
-	google.maps.event.addListener(marker, 'click', function() {
-		qtWidget.markerClicked(key, marker.position.lat(), marker.position.lng())
+	marker.on('click', function(ev) {
+		qtWidget.emitMarkerClicked(key, ...event_latlng(ev));
 	});
-	google.maps.event.addListener(marker, 'dblclick', function() {
-		qtWidget.markerDoubleClicked(key, marker.position.lat(), marker.position.lng())
+	marker.on('contextmenu', function(ev) {
+		qtWidget.emitMarkerRightClicked(key, ...event_latlng(ev));
 	});
-	google.maps.event.addListener(marker, 'rightclick', function() {
-		qtWidget.markerRightClicked(key, marker.position.lat(), marker.position.lng())
+	marker.on('dblclick', function(ev) {
+		qtWidget.emitMarkerDoubleClicked(key, ...event_latlng(ev));
 	});
 
 	markers[key] = marker;
@@ -74,22 +110,32 @@ function gmap_addMarker(key, latitude, longitude, parameters)
 
 function gmap_moveMarker(key, latitude, longitude)
 {
-	var coords = new google.maps.LatLng(latitude, longitude);
-	markers[key].setPosition(coords);
+	if (!(key in markers)) {
+		console.error(`Marker ${key} not found`)
+		return
+	}
+	markers[key].setLatLng([latitude, longitude]);
 }
 
 function gmap_deleteMarker(key)
 {
-	markers[key].setMap(null);
+	if (!markers[key]) {
+		console.error(`Marker ${key} not found`)
+		return
+	}
+	markers[key].remove();
 	delete markers[key]
 }
 
 function gmap_changeMarker(key, extras)
 {
 	if (!(key in markers)) {
+		console.error(`Marker ${key} not found`)
 		return
 	}
+	processMarkerExtras(extras)
 	markers[key].setOptions(extras);
 }
 
+window.onload = initialize()
 

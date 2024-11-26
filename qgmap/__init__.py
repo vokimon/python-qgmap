@@ -1,98 +1,65 @@
-
-doTrace = False
-usePySide = True
-if usePySide :
-	from PySide import QtCore, QtGui, QtWebKit, QtNetwork
-else :
-	from PyQt4 import QtCore, QtGui, QtWebKit, QtNetwork
-	QtCore.Signal = QtCore.pyqtSignal
-	QtCore.Slot = QtCore.pyqtSlot
-	QtCore.Property = QtCore.pyqtProperty
-
-import json
 import os
-import decorator
+from .geocoder import GeoCoder
+from .qt import QtCore, QtWidgets, QtWebEngineCore, QtWebEngineWidgets, QtWebChannel
+from .tracer import trace
 
 
-@decorator.decorator
-def trace(function, *args, **k) :
-	"""Decorates a function by tracing the begining and
-	end of the function execution, if doTrace global is True"""
+class CustomUrlRequestInterceptor(QtWebEngineCore.QWebEngineUrlRequestInterceptor):
+	def interceptRequest(self, request):
+		return
+		print(f"Accessing: {request.requestUrl().toString()}")
 
-	if doTrace : print ("> "+function.__name__, args, k)
-	result = function(*args, **k)
-	if doTrace : print ("< "+function.__name__, args, k, "->", result)
-	return result
+class LocalWebPage(QtWebEngineCore.QWebEnginePage):
+	def __init__(self, parent=None):
+		super().__init__(parent)
 
-class _LoggedPage(QtWebKit.QWebPage):
-	@trace
-	def javaScriptConsoleMessage(self, msg, line, source):
-		print ('JS: %s line %d: %s' % (source, line, msg))
-
-class GeoCoder(QtNetwork.QNetworkAccessManager) :
-	class NotFoundError(Exception) : pass
+		self.interceptor = CustomUrlRequestInterceptor()
+		self.web_engine_profile = QtWebEngineCore.QWebEngineProfile.defaultProfile()
+		self.web_engine_profile.setUrlRequestInterceptor(self.interceptor)
 
 	@trace
-	def __init__(self, parent) :
-		super(GeoCoder, self).__init__(parent)
+	def javaScriptConsoleMessage(self, level, msg, line, source):
+		print ('JS: %s %d: %s' % (source, line, msg))
 
-	@trace
-	def geocode(self, location) :
-		url = QtCore.QUrl("http://maps.googleapis.com/maps/api/geocode/xml")
-		url.addQueryItem("address", location)
-		url.addQueryItem("sensor", "false")
+
+class QGoogleMap(QtWebEngineWidgets.QWebEngineView) :
+
+	#@trace
+	def __init__(self, parent):
+		super().__init__(parent)
 		"""
-		url = QtCore.QUrl("http://maps.google.com/maps/geo/")
-		url.addQueryItem("q", location)
-		url.addQueryItem("output", "csv")
-		url.addQueryItem("sensor", "false")
+		QtWebEngineCore.QWebEngineSettings.globalSettings().setAttribute(
 		"""
-		request = QtNetwork.QNetworkRequest(url)
-		reply = self.get(request)
-		while reply.isRunning() :
-			QtGui.QApplication.processEvents()
-
-		reply.deleteLater()
-		self.deleteLater()
-		return self._parseResult(reply)
-
-	@trace
-	def _parseResult(self, reply) :
-		xml = reply.readAll()
-		reader = QtCore.QXmlStreamReader(xml)
-		while not reader.atEnd() :
-			reader.readNext()
-			if reader.name() != "geometry" : continue
-			reader.readNextStartElement()
-			if reader.name() != "location" : continue
-			reader.readNextStartElement()
-			if reader.name() != "lat" : continue
-			latitude = float(reader.readElementText())
-			reader.readNextStartElement()
-			if reader.name() != "lng" : continue
-			longitude = float(reader.readElementText())
-			return latitude, longitude
-		raise GeoCoder.NotFoundError
-
-
-class QGoogleMap(QtWebKit.QWebView) :
-
-	@trace
-	def __init__(self, parent, debug=True) :
-		super(QGoogleMap, self).__init__(parent)
-		if debug :
-			QtWebKit.QWebSettings.globalSettings().setAttribute(
-				QtWebKit.QWebSettings.DeveloperExtrasEnabled, True)
-			self.setPage(_LoggedPage())
+		self.setPage(LocalWebPage())
+		S = QtWebEngineCore.QWebEngineSettings
+		settings = {
+			#S.DeveloperExtrasEnabled: True, # Legacy?
+			S.AutoLoadImages: True,
+			S.JavascriptCanAccessClipboard: True,
+			S.ForceDarkMode: True,
+			S.LocalContentCanAccessRemoteUrls: True,
+			#S.LocalContentCanAccessFileUrls: True,
+		}
+		for attribute, value in settings.items():
+			self.settings().setAttribute(attribute, value)
 
 		self.initialized = False
+		self.resize(1024, 750);
 		self.loadFinished.connect(self.onLoadFinished)
-		self.page().mainFrame().addToJavaScriptWindowObject(
-			"qtWidget", self)
+		self.channel = QtWebChannel.QWebChannel(self)
+		self.page().setWebChannel(self.channel)
+		self.channel.registerObject('qtWidget', self)
 
 		basePath=os.path.abspath(os.path.dirname(__file__))
 		url = 'file://'+basePath+'/qgmap.html'
 		self.load(QtCore.QUrl(url))
+
+
+	def closeEvent(self, event):
+		# Ensure proper interceptor cleanup when the window is closed
+		self.interceptor = None
+		super().closeEvent(event)
+
 
 	@trace
 	def onLoadFinished(self, ok) :
@@ -106,7 +73,7 @@ class QGoogleMap(QtWebKit.QWebView) :
 	@trace
 	def waitUntilReady(self) :
 		while not self.initialized :
-			QtGui.QApplication.processEvents()
+			QtWidgets.QApplication.processEvents()
 
 	@trace
 	def geocode(self, location) :
@@ -114,20 +81,20 @@ class QGoogleMap(QtWebKit.QWebView) :
 
 	@trace
 	def runScript(self, script) :
-		return self.page().mainFrame().evaluateJavaScript(script)
+		#print(script)
+		return self.page().runJavaScript(script)
 
 	@trace
 	def centerAt(self, latitude, longitude) :
-		self.runScript("gmap_setCenter({},{})".format(latitude, longitude))
+		self.runScript(f"gmap_setCenter({latitude},{longitude})")
 
 	@trace
 	def setZoom(self, zoom) :
-		self.runScript("gmap_setZoom({})".format(zoom))
+		self.runScript(f"gmap_setZoom({zoom})")
 
 	@trace
 	def center(self) :
-		center = self.runScript("gmap_getCenter()")
-		return center.lat, center.lng
+		return self.runScript("gmap_getCenter()")
 
 	@trace
 	def centerAtAddress(self, location) :
@@ -147,35 +114,32 @@ class QGoogleMap(QtWebKit.QWebView) :
 	@trace
 	def addMarker(self, key, latitude, longitude, **extra) :
 		return self.runScript(
-			"gmap_addMarker("
-				"key={!r}, "
-				"latitude={}, "
-				"longitude={}, "
-				"{}"
-				"); "
-				.format( key, latitude, longitude, json.dumps(extra)))
+			f"gmap_addMarker({key!r}, {latitude}, {longitude}, {extra})"
+		)
 
 	@trace
 	def moveMarker(self, key, latitude, longitude) :
 		return self.runScript(
-			"gmap_moveMarker({!r}, {}, {});".format(key,latitude,longitude))
+			f"gmap_moveMarker({key!r}, {latitude}, {longitude})"
+		)
 
 	@trace
-	def setMarkerOptions(self, keys, **extra) :
+	def setMarkerOptions(self, key, **extra) :
 		return self.runScript(
-			"gmap_changeMarker("
-				"key={!r}, "
-				"{}"
-				"); "
-				.format( keys, json.dumps(extra)))
+			f"gmap_changeMarker({key!r}, {extra})"
+		)
 
 	@trace
 	def deleteMarker(self, key) :
 		return self.runScript(
-			"gmap_deleteMarker("
-				"key={!r} "
-				"); "
-				.format( key))
+			f"gmap_deleteMarker({key!r})"
+		)
+
+	@trace
+	def setTileSet(self, tilesetOptions) :
+		return self.runScript(
+			f"gmap_setTileSet({tilesetOptions})"
+		)
 
 	mapMoved = QtCore.Signal(float, float)
 	mapClicked = QtCore.Signal(float, float)
@@ -183,9 +147,43 @@ class QGoogleMap(QtWebKit.QWebView) :
 	mapDoubleClicked = QtCore.Signal(float, float)
 
 	markerMoved = QtCore.Signal(str, float, float)
-	markerClicked = QtCore.Signal(str)
-	markerDoubleClicked = QtCore.Signal(str)
-	markerRightClicked = QtCore.Signal(str)
+	markerClicked = QtCore.Signal(str, float, float)
+	markerDoubleClicked = QtCore.Signal(str, float, float)
+	markerRightClicked = QtCore.Signal(str, float, float)
+
+	# Hack to emit signals from JS, should not be needed
+
+	@QtCore.Slot(float, float)
+	def emitMapMoved(self, lat: float, lng: float):
+		self.mapMoved.emit(lat, lng)
+
+	@QtCore.Slot(float, float)
+	def emitMapClicked(self, lat: float, lng: float):
+		self.mapClicked.emit(lat, lng)
+
+	@QtCore.Slot(float, float)
+	def emitMapDoubleClicked(self, lat: float, lng: float):
+		self.mapDoubleClicked.emit(lat, lng)
+
+	@QtCore.Slot(float, float)
+	def emitMapRightClicked(self, lat: float, lng: float):
+		self.mapRightClicked.emit(lat, lng)
+
+	@QtCore.Slot(str, float, float)
+	def emitMarkerMoved(self, key: str, lat: float, lng: float):
+		self.markerMoved.emit(key, lat, lng)
+
+	@QtCore.Slot(str, float, float)
+	def emitMarkerClicked(self, key: str, lat: float, lng: float):
+		self.markerClicked.emit(key, lat, lng)
+
+	@QtCore.Slot(str, float, float)
+	def emitMarkerDoubleClicked(self, key: str, lat: float, lng: float):
+		self.markerDoubleClicked.emit(key, lat, lng)
+
+	@QtCore.Slot(str, float, float)
+	def emitMarkerRightClicked(self, key: str, lat: float, lng: float):
+		self.markerRightClicked.emit(key, lat, lng)
 
 
-
+# set ts=4 sw=4 noet

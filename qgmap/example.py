@@ -1,9 +1,9 @@
-#!/usr/bin/python3
+#!/usr/bin/env python
 
-from qgmap import *
+from qgmap import QGoogleMap, QtCore, QtWidgets
+from qgmap.presets import tilesets, googlePin, customPin
 
-if __name__ == '__main__' :
-
+def main():
 	def goCoords() :
 		def resetError() :
 			coordsEdit.setStyleSheet('')
@@ -31,12 +31,12 @@ if __name__ == '__main__' :
 		coordsEdit.setText("{}, {}".format(latitude, longitude))
 	def onMarkerRClick(key) :
 		print("RClick on ", key)
-		gmap.setMarkerOptions(key, draggable=False)
+		gmap.setMarkerOptions(key, draggable=0)
 	def onMarkerLClick(key) :
 		print("LClick on ", key)
 	def onMarkerDClick(key) :
 		print("DClick on ", key)
-		gmap.setMarkerOptions(key, draggable=True)
+		gmap.setMarkerOptions(key, draggable=1)
 
 	def onMapMoved(latitude, longitude) :
 		print("Moved to ", latitude, longitude)
@@ -46,32 +46,46 @@ if __name__ == '__main__' :
 		print("LClick on ", latitude, longitude)
 	def onMapDClick(latitude, longitude) :
 		print("DClick on ", latitude, longitude)
+	def onSetTileSet(tilesetName):
+		gmap.setTileSet(
+			tilesets.get(tilesetName) or 
+			tilesets['osm']
+		)
 
-	app = QtGui.QApplication([])
-	w = QtGui.QDialog()
-	h = QtGui.QVBoxLayout(w)
-	l = QtGui.QFormLayout()
+	print("Creatting app")
+
+	app = QtWidgets.QApplication([])
+	w = QtWidgets.QDialog()
+	h = QtWidgets.QVBoxLayout(w)
+	l = QtWidgets.QFormLayout()
 	h.addLayout(l)
 
-	addressEdit = QtGui.QLineEdit()
+	addressEdit = QtWidgets.QLineEdit()
 	l.addRow('Address:', addressEdit)
 	addressEdit.editingFinished.connect(goAddress)
-	coordsEdit = QtGui.QLineEdit()
+	coordsEdit = QtWidgets.QLineEdit()
 	l.addRow('Coords:', coordsEdit)
 	coordsEdit.editingFinished.connect(goCoords)
+	tilesetSelector = QtWidgets.QComboBox(w)
+	tilesetSelector.addItems([
+		key for key in tilesets
+	])
+	l.addRow("Tile set", tilesetSelector)
+	tilesetSelector.currentTextChanged.connect(onSetTileSet)
+
 	gmap = QGoogleMap(w)
 	gmap.mapMoved.connect(onMapMoved)
-	gmap.markerMoved.connect(onMarkerMoved)
 	gmap.mapClicked.connect(onMapLClick)
 	gmap.mapDoubleClicked.connect(onMapDClick)
 	gmap.mapRightClicked.connect(onMapRClick)
+	gmap.markerMoved.connect(onMarkerMoved)
 	gmap.markerClicked.connect(onMarkerLClick)
 	gmap.markerDoubleClicked.connect(onMarkerDClick)
 	gmap.markerRightClicked.connect(onMarkerRClick)
 	h.addWidget(gmap)
 	gmap.setSizePolicy(
-		QtGui.QSizePolicy.MinimumExpanding,
-		QtGui.QSizePolicy.MinimumExpanding)
+		QtWidgets.QSizePolicy.MinimumExpanding,
+		QtWidgets.QSizePolicy.MinimumExpanding)
 	w.show()
 
 	gmap.waitUntilReady()
@@ -79,27 +93,29 @@ if __name__ == '__main__' :
 	gmap.centerAt(41.35,2.05)
 	gmap.setZoom(13)
 	coords = gmap.centerAtAddress("Pau Casals 3, Santa Coloma de Cervelló")
-	# Many icons at: https://sites.google.com/site/gmapsdevelopment/
-	gmap.addMarker("MyDragableMark", *coords, **dict(
-		icon="http://google.com/mapfiles/ms/micons/blue-dot.png",
-		draggable=True,
-		title = "Move me!"
-		))
+	if coords:
+		gmap.addMarker("MyDragableMark", *coords, 
+			icon=customPin('green'),
+			draggable=1,
+			title = "Move me!"
+		)
 
 	# Some Static points
 	for place in [
 		"Pau Casals 13, Santa Coloma de Cervelló",
 		"Ferrer 20, Santa Coloma de Cervelló",
+		"San Joan Despi",
 		]:
 		gmap.addMarkerAtAddress(place,
-			icon="http://google.com/mapfiles/ms/micons/green-dot.png",
-			)
-
-	gmap.setZoom(17)
+			icon=customPin('darkred'),
+		)
 
 
 
-	app.exec_()
+	app.exec()
 
+
+if __name__ == '__main__' :
+	main()
 
 
