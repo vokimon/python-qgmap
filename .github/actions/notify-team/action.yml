@@ -11,7 +11,7 @@ inputs:
   to:
     description: "Target Telegram Channel"
   ignore_green_to_green:
-    description: "Ignore status changes from green to green in the same branch"
+    description: "If true do not notify when status changes from green to green in the same branch"
     default: true
 outputs:
   random-number:
@@ -24,7 +24,6 @@ runs:
       shell: bash
       if: false
       run: |
-        echo MAAAMA MIIIAA
         echo "webhookUrl: ${{ inputs.webhook }}"
         echo "jobStatus: ${{ job.status }}"
         echo "imageUrl: ${{ format('https://github.com/{0}.png', github.event.head_commit.author.username) }}"
@@ -36,16 +35,21 @@ runs:
       if: always()
       shell: bash
       run: |
+        curl -s https://api.github.com/repos/${{github.repository}}/actions/runs |
+        jq -r '[.workflow_runs | sort_by(.created_at) | .[] | select(.head_branch == "${{ github.ref_name }}") | { id: .id,  branch: .head_branch, conclusion: .conclusion, message: .head_commit.message, created_at: .created_at }  ] | .[-10:]'
         lastrun=$(
-          curl https://api.github.com/repos/${{github.repository}}/actions/runs |
-          jq -r '[.workflow_runs | sort_by(.create_at) | .[] | select(.head_branch == "${{ github.ref_name }}") | select(.id != ${{github.run_id}}) | { "branch": .head_branch, "conclusion": .conclusion }  ] | .[-1].conclusion // "new_branch"'
+          curl -s https://api.github.com/repos/${{github.repository}}/actions/runs |
+          jq -r '[.workflow_runs | sort_by(.created_at) | .[] | select(.head_branch == "${{ github.ref_name }}") | select(.id != ${{github.run_id}}) | { branch: .head_branch, conclusion: .conclusion }  ] | .[-1].conclusion // "new_branch"'
         )
         echo "LAST_RUN=$lastrun"
         echo "LAST_RUN=$lastrun" >> $GITHUB_ENV
+        echo "CURRENT_RUN=${{job.status}}"
+        echo "RUN_ID=${{github.run_id}}"
+        echo "REPORT_GREEN_TO_GREEN=${{inputs.ignore_green_to_green == false}}"
 
     - name: 📢 Notify changes in Telegram
       uses: cbrgm/telegram-github-action@v1
-      if: job.status != 'success' || env.LAST_RUN != 'success' || !inputs.ignore_green_to_green
+      if: job.status != 'success' || env.LAST_RUN != 'success' || inputs.ignore_green_to_green == false
 
       # this allows the build to succeed even when the notification fails
       # e.g. due to dependabot push, which may not have the secret
