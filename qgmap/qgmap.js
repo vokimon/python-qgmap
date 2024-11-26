@@ -92,7 +92,7 @@ function gmap_addMarker(key, latitude, longitude, parameters)
 
 	marker.on('moveend', function() {
 		const [lat, lng] = gmap_getCenter();
-		qtWidget.emitMarkerMoved(key, lat, lng, (result) => undefined);
+		qtWidget.emitMarkerMoved(key, lat, lng);
 	});
 	marker.on('click', function(ev) {
 		qtWidget.emitMarkerClicked(key, ...event_latlng(ev));

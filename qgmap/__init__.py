@@ -1,28 +1,8 @@
-
-doTrace = False
-usePySide = True
-if usePySide :
-	from PySide6 import QtCore, QtGui, QtWidgets, QtWebEngineCore, QtWebEngineWidgets, QtWebChannel, QtNetwork
-else :
-	from PyQt6 import QtCore, QtGui, QtWidgets, QtWebEngineCore, QtWebEngineWidgets, QtWebChannel, QtNetwork
-	QtCore.Signal = QtCore.pyqtSignal
-	QtCore.Slot = QtCore.pyqtSlot
-	QtCore.Property = QtCore.pyqtProperty
-
-import json
 import os
-import decorator
+from .geocoder import GeoCoder
+from .qt import QtCore, QtWidgets, QtWebEngineCore, QtWebEngineWidgets, QtWebChannel
+from .tracer import trace
 
-
-@decorator.decorator
-def trace(function, *args, **k) :
-	"""Decorates a function by tracing the begining and
-	end of the function execution, if doTrace global is True"""
-
-	if doTrace : print ("> "+function.__name__, args, k)
-	result = function(*args, **k)
-	if doTrace : print ("< "+function.__name__, args, k, "->", result)
-	return result
 
 class CustomUrlRequestInterceptor(QtWebEngineCore.QWebEngineUrlRequestInterceptor):
 	def interceptRequest(self, request):
@@ -42,43 +22,9 @@ class LocalWebPage(QtWebEngineCore.QWebEnginePage):
 		print ('JS: %s %d: %s' % (source, line, msg))
 
 
-class GeoCoder(QtNetwork.QNetworkAccessManager) :
-	class NotFoundError(Exception) : pass
-
-	@trace
-	def __init__(self, parent) :
-		super(GeoCoder, self).__init__(parent)
-
-	@trace
-	def geocode(self, location) :
-		#url = QtCore.QUrl("http://maps.googleapis.com/maps/api/geocode/xml")
-		url = QtCore.QUrl(
-			"https://nominatim.openstreetmap.org/search")
-		query = QtCore.QUrlQuery()
-		query.addQueryItem("q", location)
-		query.addQueryItem("format", "json")
-		query.addQueryItem("polygon", "1")
-		query.addQueryItem("addressdetails", "1")
-		url.setQuery(query)
-		request = QtNetwork.QNetworkRequest(url)
-		reply = self.get(request)
-		while reply.isRunning() :
-			QtWidgets.QApplication.processEvents()
-
-		reply.deleteLater()
-		self.deleteLater()
-		return self._parseResult(reply)
-
-	@trace
-	def _parseResult(self, reply) :
-		jsondata = reply.readAll()
-		data = json.loads(bytes(jsondata))
-		if not data: raise GeoCoder.NotFoundError
-		return data[0]['lat'], data[0]['lon']
-
 class QGoogleMap(QtWebEngineWidgets.QWebEngineView) :
 
-	@trace
+	#@trace
 	def __init__(self, parent):
 		super().__init__(parent)
 		"""
