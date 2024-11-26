@@ -1,3 +1,5 @@
+import base64
+
 # https://leaflet-extras.github.io/leaflet-providers/preview/
 tilesets = dict(
 	osm = dict(
@@ -26,15 +28,18 @@ tilesets = dict(
 	),
 )
 
+def base64DataUrl(content):
+	return 'data:image/svg+xml;base64,'+base64.b64encode(content.encode('utf8')).decode('utf8')
+
 
 def customPin(color):
 	path = "M 0,0 C -2,-20 -10,-22 -10,-30 A 10,10 0 1,1 10,-30 C 10,-22 2,-20 0,0 z M -2,-30 a 2,2 0 1,1 4,0 2,2 0 1,1 -4,0"
-	url = (
-		'data:image/svg+xml;utf8,'
+	svg = (
 		'<svg xmlns="http://www.w3.org/2000/svg" width="24" height="42" viewBox="-12 -42 24 42">' 
-		f'<path d="{path}" fill="{color}" stroke="black"/>'
+		f'<path d="{path}" fill="{color}" stroke="#000000" stroke-width="1"/>'
 		'</svg>'
 	)
+	url = base64DataUrl(svg)
 	return dict(
 		iconUrl=url,
 		iconAnchor=[12,42],
