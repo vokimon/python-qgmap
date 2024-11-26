@@ -37,6 +37,10 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Install system dependencies
+        run: |
+          sudo apt update && sudo apt install -y libegl1-mesa-dev
+
       - name: 🚀 Install pip dependencies
         uses: BSFishy/pip-action@v1
         with:
@@ -50,13 +54,23 @@ jobs:
 
       - name: ✅ Unit tests
         run: |
-          pytest --cov=somutils somutils
+          pytest --cov=qgmap qgmap
 
       - name: ☂️ Coveralls
         uses: AndreMiras/coveralls-python-action@develop
         with:
           parallel: true
           flag-name: Unit tests
+
+      - name: Obtain previous run status on the branch
+        if: always()
+        run: |
+          lastrun=$(
+            curl https://api.github.com/repos/${{github.repository}}/actions/runs |
+            jq -r '[.workflow_runs | sort_by(.create_at) | .[] | select(.head_branch == "${{ github.ref_name }}") | select(.id != ${{github.run_id}}) | { "branch": .head_branch, "conclusion": .conclusion }  ] | .[-1].conclusion'
+          )
+          echo "LAST_RUN=$lastrun"
+          echo "LAST_RUN=$lastrun" >> $GITHUB_ENV
 
       - name: 📢 Notify changes
         uses: cbrgm/telegram-github-action@v1
@@ -69,17 +83,15 @@ jobs:
           token: ${{ secrets.TELEGRAM_TOKEN }}
           to: ${{ secrets.TELEGRAM_CHAT_ID }}
           parse-mode: 'markdown'
+          disable-web-page-preview: true
           message: |
-            ## ${{ job.status }} - "${{ format('{0} -- [{1}]', github.event.repository.name, github.ref_name) }}"
+            ${{ format('{3} → {2}: {0} `[{1}]`', github.event.repository.name, github.ref_name, (job.status == 'failure' && '❌' ) || (job.status == 'success' && '✅' ) || job.status, (env.LAST_RUN == 'failure' && '❌' ) || (env.LAST_RUN == 'success' && '✅' ) || (env.LAST_RUN == 'new_branch' && '✨' ) || env.LAST_RUN ) }}
+
+            ${{ format('Author: {0} ![Avatar](https://github.com/{1}.png)', github.event.head_commit.author.name, github.event.head_commit.author.username ) }}
             
-            ![Avatar](${{ format('https://github.com/{0}.png', github.event.head_commit.author.username) }}  "${{ github.event.head_commit.author.name }}")
-            
-            <blockquote>
-            ${{ github.event.head_commit.message }}
-            </blockquote>
-            
-            / [Repository](https://github.com/${{ github.repository }})
-            / [Changes](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
+            Commit: ${{ github.event.head_commit.message }}
+
+            [Details](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) - [Repository](https://github.com/${{ github.repository }}) - [Changes](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
 
   coveralls_finish:
     needs: build
