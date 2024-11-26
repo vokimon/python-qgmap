@@ -1,7 +1,8 @@
 # Changelog
 
-## Unreleased
+## 1.0.1 (2024-11-26)
 
+- Fix: resources were not included in the package
 - Fix: change marker options properly in leaflet
 - Fix: base64 encoded markers to enable #RRGGBB colors without escaping 
 - Marker icon attribute can be just an image url if the image.
