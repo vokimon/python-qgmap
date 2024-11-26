@@ -61,12 +61,11 @@ jobs:
         with:
           parallel: true
           flag-name: Unit tests
-          token: ${{ secrets.TELEGRAM_TOKEN }}
-          to: ${{ secrets.TELEGRAM_CHAT_ID }}
 
       - name: 📢 Notify status changes
         if: always()
-        uses: ./.github/actions/notify-team
+        uses: vokimon/gha-notify-telegram@master
+        #uses: ./.github/actions/notify-team
         with:
           token: ${{ secrets.TELEGRAM_TOKEN }}
           to: ${{ secrets.TELEGRAM_CHAT_ID }}
