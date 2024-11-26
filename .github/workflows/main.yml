@@ -52,12 +52,6 @@ jobs:
         run: |
           pytest --cov=somutils somutils
 
-      - name: ☂️ Coveralls
-        uses: AndreMiras/coveralls-python-action@develop
-        with:
-          parallel: true
-          flag-name: Unit tests
-
       - name: 📢 Notify changes
         uses: cbrgm/telegram-github-action@v1
         if: always()
@@ -68,7 +62,6 @@ jobs:
         with:
           token: ${{ secrets.TELEGRAM_TOKEN }}
           to: ${{ secrets.TELEGRAM_CHAT_ID }}
-          dry-run: true
           message: |
             New commit by ${{ github.actor }}!
             Commit: ${{ github.event.head_commit.message }}
@@ -78,6 +71,12 @@ jobs:
             imageUrl: ${{ format('https://github.com/{0}.png', github.event.head_commit.author.username) }}
             imageAltText: ${{ github.event.head_commit.author.name }}
             title: "${{ format('{0} -- [{1}]', github.event.repository.name, github.ref_name ) }}"
+
+      - name: ☂️ Coveralls
+        uses: AndreMiras/coveralls-python-action@develop
+        with:
+          parallel: true
+          flag-name: Unit tests
 
   coveralls_finish:
     needs: build
