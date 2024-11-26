@@ -1,4 +1,5 @@
-// main var
+// global vars
+
 var map;
 var markers=[];
 var tileset=undefined;
@@ -11,6 +12,7 @@ const defaultTileSet = {
 	attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
 }
 
+// utilities
 
 function showMethods(object) {
 	//console.error(JSON.stringify(object.toJSON()))
@@ -32,6 +34,7 @@ function processMarkerExtras(extras) {
 
 
 // main init function
+
 function initialize() {
 	new QWebChannel(qt.webChannelTransport, function(channel) {
 		map = L.map('map').setView(defaultLocation, defaultZoom);
@@ -41,8 +44,7 @@ function initialize() {
 		qtWidget = window.qtWidget = channel.objects.qtWidget;
 
 		map.on('moveend', function() {
-			const [lat, lng] = gmap_getCenter();
-			qtWidget.emitMapMoved(lat, lng, (result) => undefined);
+			qtWidget.emitMapMoved(...gmap_getCenter());
 		});
 		map.on('click', function(ev) {
 			qtWidget.emitMapClicked(...event_latlng(ev));
@@ -57,6 +59,7 @@ function initialize() {
 }
 
 // custom functions
+
 function gmap_setTileSet(params)
 {
 	const {urlTemplate, ...options} = params
@@ -91,8 +94,7 @@ function gmap_addMarker(key, latitude, longitude, parameters)
 	var marker = L.marker([latitude, longitude], parameters).addTo(map)
 
 	marker.on('moveend', function() {
-		const [lat, lng] = gmap_getCenter();
-		qtWidget.emitMarkerMoved(key, lat, lng);
+		qtWidget.emitMarkerMoved(key, ...gmap_getCenter());
 	});
 	marker.on('click', function(ev) {
 		qtWidget.emitMarkerClicked(key, ...event_latlng(ev));
@@ -139,3 +141,4 @@ function gmap_changeMarker(key, extras)
 
 window.onload = initialize()
 
+// vim: et ts=2 sw=2 noet
