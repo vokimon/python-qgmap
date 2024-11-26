@@ -27,34 +27,57 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
+      - name: ⬇️ Checkout Repo
+        uses: actions/checkout@v3
         with:
           ref: ${{ github.head_ref }}
 
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: 🐍 Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
 
-      - uses: BSFishy/pip-action@v1
+      - name: 🚀 Install pip dependencies
+        uses: BSFishy/pip-action@v1
         with:
           packages: |
             coveralls
             pytest-cov
 
-      - name: Install dependencies
+      - name: 🏗️ Install package
         run: |
           pip install -e .
 
-      - name: Unit tests
+      - name: ✅ Unit tests
         run: |
           pytest --cov=somutils somutils
 
-      - name: Coveralls
+      - name: ☂️ Coveralls
         uses: AndreMiras/coveralls-python-action@develop
         with:
           parallel: true
           flag-name: Unit tests
+
+      - name: 📢 Notify changes
+        uses: cbrgm/telegram-github-action@v1
+        if: always()
+        #if: job.status == 'failure'
+        # this allows the build to succeed even when the notification fails
+        # e.g. due to dependabot push, which may not have the secret
+        continue-on-error: true
+        with:
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          message: |
+            New commit by ${{ github.actor }}!
+            Commit: ${{ github.event.head_commit.message }}
+            Repository: ${{ github.repository }}
+            View changes: https://github.com/${{ github.repository }}/commit/${{ github.sha }}
+            jobStatus: ${{ job.status }}
+            imageUrl: ${{ format('https://github.com/{0}.png', github.event.head_commit.author.username) }}
+            imageAltText: ${{ github.event.head_commit.author.name }}
+            title: "${{ format('{0} -- [{1}]', github.event.repository.name, github.ref_name ) }}"
+
 
   coveralls_finish:
     needs: build
