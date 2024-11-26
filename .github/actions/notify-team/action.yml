@@ -42,9 +42,9 @@ runs:
 
     - name: 📢 Notify changes in Telegram
       uses: cbrgm/telegram-github-action@v1
-      if: always()
+      #if: always()
       #if: job.status == 'failure'
-      #if: job.status != 'success' || env.LAST_RUN != 'success'
+      if: job.status != 'success' || env.LAST_RUN != 'success'
 
       # this allows the build to succeed even when the notification fails
       # e.g. due to dependabot push, which may not have the secret
