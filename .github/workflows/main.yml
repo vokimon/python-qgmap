@@ -68,17 +68,18 @@ jobs:
         with:
           token: ${{ secrets.TELEGRAM_TOKEN }}
           to: ${{ secrets.TELEGRAM_CHAT_ID }}
-          parse_model: 'markdown'
+          parse-mode: 'markdown'
           message: |
-            ## ${{ job.status }} - "${{ format('{0} -- [{1}]', github.event.repository.name, github.ref_name ) }}"
+            ## ${{ job.status }} - "${{ format('{0} -- [{1}]', github.event.repository.name, github.ref_name) }}"
             
-            ![Avatar](${{ format('https://github.com/{0}.png', github.event.head_commit.author.username) }}  ${{ github.event.head_commit.author.name }})
+            ![Avatar](${{ format('https://github.com/{0}.png', github.event.head_commit.author.username) }}  "${{ github.event.head_commit.author.name }}")
             
             <blockquote>
             ${{ github.event.head_commit.message }}
             </blockquote>
             
-            [Execution]() / [Repository](${{ github.repository }}) / [Changes](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
+            / [Repository](https://github.com/${{ github.repository }})
+            / [Changes](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
 
   coveralls_finish:
     needs: build
