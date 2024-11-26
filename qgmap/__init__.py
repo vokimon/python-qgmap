@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from .geocoder import GeoCoder
 from .qt import QtCore, QtWidgets, QtWebEngineCore, QtWebEngineWidgets, QtWebChannel
 from .tracer import trace
@@ -50,9 +51,8 @@ class QGoogleMap(QtWebEngineWidgets.QWebEngineView) :
 		self.page().setWebChannel(self.channel)
 		self.channel.registerObject('qtWidget', self)
 
-		basePath=os.path.abspath(os.path.dirname(__file__))
-		url = 'file://'+basePath+'/qgmap.html'
-		self.load(QtCore.QUrl(url))
+		htmlfile = Path(__file__).parent.absolute() / 'qgmap.html'
+		self.load(QtCore.QUrl(htmlfile.as_uri()))
 
 
 	def closeEvent(self, event):
