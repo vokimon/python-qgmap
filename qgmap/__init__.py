@@ -113,6 +113,11 @@ class QGoogleMap(QtWebEngineWidgets.QWebEngineView) :
 
 	@trace
 	def addMarker(self, key, latitude, longitude, **extra) :
+		if 'icon' in extra and type(extra['icon']) == str:
+			extra = dict(extra, icon = dict(
+				iconUrl=extra['icon'],
+				iconAnchor=[16, 32],
+			))
 		return self.runScript(
 			f"gmap_addMarker({key!r}, {latitude}, {longitude}, {extra})"
 		)
