@@ -35,7 +35,7 @@ runs:
       run: |
         lastrun=$(
           curl https://api.github.com/repos/${{github.repository}}/actions/runs |
-          jq -r '[.workflow_runs | sort_by(.create_at) | .[] | select(.head_branch == "${{ github.ref_name }}") | select(.id != ${{github.run_id}}) | { "branch": .head_branch, "conclusion": .conclusion }  ] | .[-1].conclusion // new_branch'
+          jq -r '[.workflow_runs | sort_by(.create_at) | .[] | select(.head_branch == "${{ github.ref_name }}") | select(.id != ${{github.run_id}}) | { "branch": .head_branch, "conclusion": .conclusion }  ] | .[-1].conclusion // "new_branch"'
         )
         echo "LAST_RUN=$lastrun"
         echo "LAST_RUN=$lastrun" >> $GITHUB_ENV
