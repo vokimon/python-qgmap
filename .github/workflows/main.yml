@@ -68,7 +68,7 @@ jobs:
         with:
           token: ${{ secrets.TELEGRAM_TOKEN }}
           to: ${{ secrets.TELEGRAM_CHAT_ID }}
-
+          parse_model: 'markdown'
           message: |
             ## ${{ job.status }} - "${{ format('{0} -- [{1}]', github.event.repository.name, github.ref_name ) }}"
             
