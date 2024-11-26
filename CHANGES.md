@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Fix: change marker options properly in leaflet
+- Fix: base64 encoded markers to enable #RRGGBB colors without escaping 
+- Marker icon attribute can be just an image url if the image.
+  In that case anchor is placed at 16,32 guessing a 32x32 icon.
+
 ## 1.0.0 (2024-11-26)
 
 - Migrated to Qt6
