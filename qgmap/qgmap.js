@@ -131,12 +131,12 @@ function gmap_deleteMarker(key)
 
 function gmap_changeMarker(key, extras)
 {
-	if (!(key in markers)) {
+	if (!markers[key]) {
 		console.error(`Marker ${key} not found`)
 		return
 	}
 	processMarkerExtras(extras)
-	markers[key].setOptions(extras);
+	L.setOptions(markers[key], extras);
 }
 
 window.onload = initialize()
