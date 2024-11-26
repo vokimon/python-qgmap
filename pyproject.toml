@@ -3,7 +3,7 @@ requires = ["setuptools", "wheel"]
 
 [project]
 name = "qgmap"
-version="0.2"
+version="1.0.0"
 description = "Interactive map widget for PySyde/PyQt4"
 authors = [
     { name="David García Garzón", email="voki@canvoki.net" },

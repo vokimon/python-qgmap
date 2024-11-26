@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.0 (2024-11-26)
+## 1.0.0 (2024-11-26)
 
 - Migrated to Qt6
 - Using Leaflet instead Google Maps API
