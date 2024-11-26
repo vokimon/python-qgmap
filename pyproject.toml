@@ -27,6 +27,7 @@ classifiers = [
 ]
 dependencies = [
     'pyside6',
+    'decorator',
     'pytest',
     'pytest-cov',
 ]
