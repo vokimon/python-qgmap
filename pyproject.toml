@@ -44,6 +44,12 @@ Changelog = "https://github.com/vokimon/python-qgmap/blob/master/CHANGELOG.md"
 [tool.setuptools.packages]
 find = {}
 
+[tool.setuptools.package-data]
+qgmap = [
+    "qgmap.html",
+    "qgmap.js",
+]
+
 [tool.coverage.run]
 relative_files = true
 branch = true
