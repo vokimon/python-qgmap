@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.0 (2024-11-29)
+
+- Custom pin accepts an optional path
+
 ## 1.0.1 (2024-11-26)
 
 - Fix: resources were not included in the package
